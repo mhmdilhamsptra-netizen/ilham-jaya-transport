@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ilham Jaya Transport</title>
+  <link rel="stylesheet" href="style.css">
+  
+ <!-- LIBRARY JSPDF (LANGSUNG UNDUH PDF DI HP/LAPTOP TANPA PRINT PREVIEW MACET) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <h1>ILHAM JAYA TRANSPORT</h1>
+      <p>Melayani Sepenuh Hati</p>
+    </div>
+    <div class="menu-toggle" id="menu-toggle" onclick="toggleMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </header>
+
+  <!-- OVERLAY BACKGROUND GELAP NAV -->
+  <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+  <!-- DRAWER NAVIGASI -->
+  <nav class="nav-menu" id="nav-menu">
+    <a href="#sejarah" onclick="toggleMenu()">Sejarah & Alamat</a>
+    <a href="#status-armada" onclick="toggleMenu()">Status Ketersediaan Armada</a>
+    <a href="#booking" onclick="toggleMenu()">Sewa Unit (Customer)</a>
+    <a onclick="openModalAdmin()">Portal Admin</a>
+  </nav>
+
+  <div class="container">
+    
+    <!-- SEKSI SEJARAH & ALAMAT -->
+    <section id="sejarah">
+      <h2>Tentang, Sejarah & Lokasi Perusahaan</h2>
+      <p>
+        <strong>Ilham Jaya Transport</strong> adalah Perusahaan Penyedia Jasa Penyewaan Armada Transportasi & Truk Terpercaya. Didirikan pada tahun 2026 oleh <strong>Muhamad Ilham Saputra</strong>, perusahaan ini berdiri dengan komitmen tinggi untuk menyediakan persewaan unit bus pariwisata yang nyaman serta rental truk angkutan barang yang siap pakai untuk berbagai kebutuhan rute Anda.
+      </p>
+
+      <div class="address-box">
+        <div class="address-item">
+          <h4>Alamat Kantor Pusat:</h4>
+          <p>Jalan Rumah Ilham, RT. 00/RW. 11, Kel. Pejuang, Kec. Medan Satria, Kota Bekasi.</p>
+        </div>
+        <div class="address-item">
+          <h4>Alamat Garasi Utama (Pool Armada):</h4>
+          <p>Jl. Raya Pulogebang No. 88, RT. 05/RW. 03, Kel. Pulogebang, Kec. Cakung, Kota Jakarta Timur.</p>
+        </div>
+        <div class="address-item">
+          <h4>Nomor Telepon / WhatsApp Reservasi:</h4>
+          <p><strong>085775 789017</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEKSI STATUS KETERSEDIAAN ARMADA (REAL-TIME) -->
+    <section id="status-armada">
+      <h2>Status Ketersediaan Armada (Masing-Masing 1 Unit)</h2>
+      <div class="grid-unit" id="unit-status-container">
+        <!-- Komponen Kartu Unit & Badge Status Dirender Otomatis oleh script.js -->
+      </div>
+    </section>
+
+    <!-- SEKSI FORM CUSTOMER -->
+    <section id="booking">
+      <h2>Formulir Penyewaan Unit (Khusus Customer)</h2>
+      <form id="customer-form" onsubmit="prosesBookingCustomer(event)">
+        
+        <div class="form-group">
+          <label for="c_nama">Nama Lengkap / Penyewa:</label>
+          <input type="text" id="c_nama" placeholder="Masukkan nama Anda" required>
+        </div>
+
+        <div class="form-group">
+          <label for="c_alamat_penyewa">Alamat Lengkap Penyewa:</label>
+          <textarea id="c_alamat_penyewa" rows="2" placeholder="Masukkan alamat domisili / tempat tinggal Penyewa" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="c_unit">Unit yang Ingin Disewa:</label>
+          <select id="c_unit" onchange="hitungHarga()" required>
+            <option value="">-- Pilih Unit Armada --</option>
+            <optgroup label="Bus Pariwisata">
+              <option value="Elf (12-20 Kursi)">Sewa Elf (12 - 20 Kursi)</option>
+              <option value="Medium Bus (25-39 Kursi)">Sewa Medium Bus (25 - 39 Kursi)</option>
+              <option value="Big Bus (45-59 Kursi)">Sewa Big Bus (45 - 59 Kursi)</option>
+            </optgroup>
+            <optgroup label="Truk Angkutan">
+              <option value="Truk Engkel">Sewa Truk Engkel</option>
+              <option value="Truk Fuso">Sewa Truk Fuso</option>
+              <option value="Truk Trailer">Sewa Truk Trailer</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="c_tujuan">Kota Tujuan / Rute Perjalanan:</label>
+          <select id="c_tujuan" onchange="hitungHarga()" required>
+            <option value="">-- Pilih Kota Tujuan --</option>
+            <optgroup label="Jabodetabek & Jawa Barat">
+              <option value="Jakarta">Jakarta</option>
+              <option value="Bogor">Bogor</option>
+              <option value="Bandung">Bandung</option>
+              <option value="Sukabumi">Sukabumi</option>
+              <option value="Cianjur">Cianjur</option>
+              <option value="Cirebon">Cirebon</option>
+            </optgroup>
+            <optgroup label="Jawa Tengah & DIY">
+              <option value="Tegal">Tegal</option>
+              <option value="Pekalongan">Pekalongan</option>
+              <option value="Semarang">Semarang</option>
+              <option value="Purwokerto">Purwokerto</option>
+              <option value="Yogyakarta">Yogyakarta</option>
+              <option value="Solo">Solo</option>
+              <option value="Wonogiri">Wonogiri</option>
+              <option value="Temanggung">Temanggung</option>
+              <option value="Kudus">Kudus</option>
+              <option value="Rembang">Rembang</option>
+            </optgroup>
+            <optgroup label="Jawa Timur & Bali">
+              <option value="Tuban">Tuban</option>
+              <option value="Surabaya">Surabaya</option>
+              <option value="Malang">Malang</option>
+              <option value="Batu">Batu</option>
+              <option value="Kediri">Kediri</option>
+              <option value="Blitar">Blitar</option>
+              <option value="Banyuwangi">Banyuwangi</option>
+              <option value="Gilimanuk">Gilimanuk</option>
+              <option value="Denpasar">Denpasar</option>
+            </optgroup>
+            <optgroup label="Sumatra">
+              <option value="Lampung">Lampung</option>
+              <option value="Palembang">Palembang</option>
+              <option value="Prabumulih">Prabumulih</option>
+              <option value="Jambi">Jambi</option>
+              <option value="Rengat">Rengat</option>
+              <option value="Pekanbaru">Pekanbaru</option>
+              <option value="Padang">Padang</option>
+              <option value="Bukittinggi">Bukittinggi</option>
+              <option value="Sibolga">Sibolga</option>
+              <option value="Pematang Siantar">Pematang Siantar</option>
+              <option value="Medan">Medan</option>
+              <option value="Sabang">Sabang</option>
+              <option value="Banda Aceh">Banda Aceh</option>
+            </optgroup>
+            <optgroup label="Kalimantan & Sulawesi">
+              <option value="Palangkaraya">Palangkaraya</option>
+              <option value="Banjarmasin">Banjarmasin</option>
+              <option value="Makassar">Makassar</option>
+              <option value="Parepare">Parepare</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="c_durasi">Durasi Waktu Sewa (Hari):</label>
+            <select id="c_durasi" onchange="hitungHarga()" required>
+              <option value="1">1 Hari</option>
+              <option value="2">2 Hari</option>
+              <option value="3">3 Hari</option>
+              <option value="4">4 Hari</option>
+              <option value="5">5 Hari</option>
+              <option value="6">6 Hari</option>
+              <option value="7">7 Hari (1 Minggu)</option>
+              <option value="10">10 Hari</option>
+              <option value="14">14 Hari (2 Minggu)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="c_tanggal_sewa">Mulai Tanggal Sewa:</label>
+            <input type="date" id="c_tanggal_sewa" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="c_lokasi_penjemputan">Detail Lokasi Penjemputan Unit:</label>
+          <textarea id="c_lokasi_penjemputan" rows="2" placeholder="Masukkan lokasi penjemputan spesifik" required></textarea>
+        </div>
+
+        <!-- ESTIMASI HARGA -->
+        <div class="price-box">
+          <h3>Estimasi Biaya Sewa:</h3>
+          <div class="price-rate-info" id="display-rate-info">Tarif Per Hari: Rp 0</div>
+          <div class="price-amount" id="display-harga">Total: Rp 0</div>
+          <small style="color: #64748b; font-size: 0.8rem;">*Harga estimasi belum termasuk biaya tol, parkir, dan tips driver.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="c_pembayaran">Metode Pembayaran Sewa:</label>
+          <select id="c_pembayaran" required>
+            <option value="">-- Pilih Metode Pembayaran --</option>
+            <option value="Transfer Bank">Transfer Bank</option>
+            <option value="E-Wallet / DANA">E-Wallet / DANA</option>
+            <option value="Cash saat Serah Terima Unit">Cash (Tunai) saat Serah Terima Unit</option>
+          </select>
+        </div>
+
+        <button type="submit" id="btn-submit-booking" class="btn-submit">Kirim Pemesanan Sewa</button>
+      </form>
+    </section>
+
+  </div>
+
+  <!-- POP-UP MODAL PORTAL ADMIN -->
+  <div class="modal-sopir" id="modalAdmin">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeModalAdmin()">&times;</span>
+      
+      <h2 style="font-size: 1.2rem; margin-bottom: 15px;">Portal Admin</h2>
+      
+      <!-- FORM LOGIN ADMIN -->
+      <div id="login-section" class="login-box">
+        <h3>Login Akun Admin</h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px;">Login untuk konfirmasi selesai sewa unit armada.</p>
+        
+        <div class="form-group">
+          <label for="username_input">Username Admin:</label>
+          <input type="text" id="username_input" placeholder="Masukkan username admin">
+        </div>
+        
+        <div class="form-group">
+          <label for="password_input">Password:</label>
+          <input type="password" id="password_input" placeholder="Masukkan password admin">
+        </div>
+
+        <p id="error-message" class="error-msg">Username atau password admin salah!</p>
+        <button type="button" onclick="loginAdmin()" class="btn-submit" style="margin-top: 10px;">Login Portal Admin</button>
+      </div>
+
+      <!-- DASHBOARD ADMIN SETELAH LOGIN -->
+      <div id="driver-form-section" style="display: none;">
+        <div class="driver-welcome">
+          <span>Selamat Datang, <strong id="admin-name-display"></strong>!</span>
+          <button type="button" onclick="logoutAdmin()" class="btn-logout">Logout</button>
+        </div>
+
+        <!-- DAFTAR UNIT DIPESAN & TOMBOL KONFIRMASI SELESAI -->
+        <h3 style="margin-bottom: 10px; font-size: 1.1rem; color: #1a365d;">Konfirmasi Selesai Sewa Unit:</h3>
+        <div id="admin-unit-list" style="margin-bottom: 25px;">
+          <!-- Didaftar via JavaScript -->
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 Ilham Jaya Transport. Melayani Sepenuh Hati.
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
