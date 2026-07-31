@@ -1,0 +1,340 @@
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+body {
+  background-color: #f4f6f9;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* HEADER & NAVIGATION */
+header {
+  background: linear-gradient(135deg, #1a365d, #2b6cb0);
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.brand h1 {
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+}
+.brand p {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  font-style: italic;
+}
+
+/* TOMBOL HAMBURGER */
+.menu-toggle {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 20px;
+  cursor: pointer;
+  z-index: 1001;
+}
+.menu-toggle span {
+  display: block;
+  height: 3px;
+  width: 100%;
+  background-color: white;
+  border-radius: 2px;
+  transition: 0.3s;
+}
+
+/* DRAWER / MENU TERSEMBUNYI */
+.nav-menu {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 250px;
+  height: 100vh;
+  background-color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  padding-top: 80px;
+  transition: 0.3s ease-in-out;
+  box-shadow: -4px 0 10px rgba(0,0,0,0.3);
+  z-index: 999;
+}
+.nav-menu.active {
+  right: 0;
+}
+.nav-menu a {
+  color: white;
+  text-decoration: none;
+  padding: 15px 25px;
+  font-size: 1rem;
+  border-bottom: 1px solid #1e293b;
+  transition: 0.2s;
+  cursor: pointer;
+}
+.nav-menu a:hover {
+  background-color: #2b6cb0;
+  padding-left: 30px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  z-index: 998;
+}
+.overlay.active {
+  display: block;
+}
+
+/* LAYOUT UTAMA */
+.container {
+  max-width: 900px;
+  margin: 25px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+section {
+  margin-bottom: 40px;
+  scroll-margin-top: 80px;
+}
+h2 {
+  color: #1a365d;
+  border-bottom: 3px solid #2b6cb0;
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+}
+.grid-unit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 18px;
+  background: #f8fafc;
+  position: relative;
+}
+.card h3 {
+  color: #2b6cb0;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+/* BADGE STATUS TERSEDIA / BOOKED */
+.badge-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.badge-tersedia {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+.badge-booked {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.address-box {
+  background-color: #eff6ff;
+  border-left: 4px solid #2b6cb0;
+  padding: 15px;
+  border-radius: 0 8px 8px 0;
+  margin-top: 20px;
+}
+.address-item {
+  margin-bottom: 12px;
+}
+.address-item:last-child {
+  margin-bottom: 0;
+}
+.address-item h4 {
+  color: #1a365d;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+.form-row .form-group {
+  flex: 1;
+}
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #4a5568;
+}
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* ESTIMASI HARGA BOX */
+.price-box {
+  background-color: #f0fdf4;
+  border: 2px dashed #16a34a;
+  padding: 18px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.price-box h3 {
+  font-size: 1rem;
+  color: #15803d;
+  margin-bottom: 5px;
+}
+.price-rate-info {
+  font-size: 0.9rem;
+  color: #166534;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+.price-amount {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #15803d;
+}
+
+.btn-submit {
+  background-color: #2b6cb0;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
+  font-weight: bold;
+}
+.btn-submit:hover {
+  background-color: #1a365d;
+}
+.btn-submit:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.btn-complete {
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin-top: 8px;
+}
+.btn-complete:hover {
+  background-color: #15803d;
+}
+
+/* MODAL POP-UP KHUSUS ADMIN */
+.modal-sopir {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+.modal-content {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.close-modal {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #64748b;
+  cursor: pointer;
+}
+.close-modal:hover {
+  color: #1e293b;
+}
+
+.login-box {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 20px;
+  border-radius: 8px;
+}
+.driver-welcome {
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.btn-logout {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.error-msg {
+  color: #dc2626;
+  font-size: 14px;
+  margin-top: 10px;
+  display: none;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #0f172a;
+  color: white;
+  margin-top: 40px;
+  font-size: 14px;
+}
