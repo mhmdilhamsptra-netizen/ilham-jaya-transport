@@ -285,6 +285,18 @@ function renderAdminUnitList() {
 
 function hapusBookingAdmin(unitName, bookingId) {
   if (confirm("Apakah Anda yakin ingin menghapus jadwal ini?")) {
+    // 1. Hapus dari Firebase Database
+    database.ref("reservasi").once("value", (snapshot) => {
+      const data = snapshot.val();
+      for (const firebaseKey in data) {
+        if (data[firebaseKey].id === bookingId) {
+          database.ref("reservasi/" + firebaseKey).remove();
+          break;
+        }
+      }
+    });
+
+    // 2. Hapus dari LocalStorage
     const armada = getArmadaData();
     if (armada[unitName] && armada[unitName].bookings) {
       armada[unitName].bookings = armada[unitName].bookings.filter(b => b.id !== bookingId);
@@ -544,4 +556,33 @@ function cetakPDF(namaUnit, dataBooking) {
 // JALANKAN SAAT HALAMAN DIBUKA
 document.addEventListener("DOMContentLoaded", function() {
   renderStatusArmada();
+});
+// LISTENER REALTIME DARI FIREBASE UNTUK PORTAL ADMIN
+database.ref("reservasi").on("value", (snapshot) => {
+  const firebaseData = snapshot.val();
+  if (firebaseData) {
+    const armada = getArmadaData();
+    
+    // Reset dulu array booking lokal
+    for (const key in armada) {
+      armada[key].bookings = [];
+    }
+
+    // Masukkan semua data dari Firebase ke dalam list armada
+    Object.keys(firebaseData).forEach(key => {
+      const b = firebaseData[key];
+      if (armada[b.unitArmada]) {
+        armada[b.unitArmada].bookings.push(b);
+      }
+    });
+
+    // Simpan sync ke local & update tampilan admin jika modal terbuka
+    localStorage.setItem("ijt_armada_status", JSON.stringify(armada));
+    renderStatusArmada();
+    
+    const modalAdmin = document.getElementById('modalAdmin');
+    if (modalAdmin && modalAdmin.style.display === 'flex') {
+      renderAdminUnitList();
+    }
+  }
 });
