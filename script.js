@@ -586,3 +586,42 @@ database.ref("reservasi").on("value", (snapshot) => {
     }
   }
 });
+// LISTENER REALTIME UNTUK MENAMPILKAN DATA DI PORTAL ADMIN
+database.ref("reservasi").on("value", (snapshot) => {
+  const firebaseData = snapshot.val();
+  const armada = getArmadaData();
+
+  // Reset daftar booking lokal
+  for (const key in armada) {
+    armada[key].bookings = [];
+  }
+
+  // Jika ada data dari Firebase, masukkan ke daftar armada
+  if (firebaseData) {
+    Object.keys(firebaseData).forEach((key) => {
+      const b = firebaseData[key];
+      // Cari nama unit armada
+      const namaUnit = b.unitArmada || b.unit || b.mobil;
+
+      if (namaUnit && armada[namaUnit]) {
+        b.id = b.id || key;
+        armada[namaUnit].bookings.push(b);
+      }
+    });
+  }
+
+  // Simpan update ke LocalStorage & perbarui tampilan Admin
+  localStorage.setItem("ijt_armada_status", JSON.stringify(armada));
+
+  if (typeof renderStatusArmada === "function") {
+    renderStatusArmada();
+  }
+
+  // Jika modal admin sedang terbuka, render ulang daftarnya
+  const modalAdmin = document.getElementById("modalAdmin");
+  if (modalAdmin && modalAdmin.style.display === "flex") {
+    if (typeof renderAdminUnitList === "function") {
+      renderAdminUnitList();
+    }
+  }
+});
