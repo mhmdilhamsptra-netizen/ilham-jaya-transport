@@ -177,7 +177,8 @@ async function prosesBookingCustomer(event) {
     totalHarga: hargaText,
     waktuPesan: new Date().toLocaleString("id-ID")
   };
-   // 1. Simpan ke sistem lokal
+
+  // 1. Simpan ke sistem lokal
   unitData.bookings.push(newBooking);
   saveArmadaData(armada);
 
@@ -224,6 +225,7 @@ function renderAdminUnitList() {
         totalSemuaBooking++;
         const item = document.createElement("div");
         item.style.cssText = "background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.88rem; color: #334155;";
+        
         const bookingJson = JSON.stringify(d).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
 
         item.innerHTML = `
@@ -256,6 +258,7 @@ function renderAdminUnitList() {
     divBooked.innerHTML += "<p style='color:#64748b; font-size: 0.85rem;'>Belum ada jadwal pemesanan aktif.</p>";
   }
   container.appendChild(divBooked);
+
   // KONTROL MAINTENANCE
   const divControl = document.createElement("div");
   divControl.style.cssText = "margin-top: 20px; border-top: 2px solid #e2e8f0; padding-top: 15px;";
@@ -303,19 +306,24 @@ function hapusBookingAdmin(unitName, bookingId) {
   }
 }
 
-
+// UBAH STATUS MAINTENANCE & SINKRONISASI KE FIREBASE
 function ubahStatusMaintenance(unitName, statusBaru) {
+  // Safe Key untuk Firebase (mengganti karakter khusus agar tidak merusak path)
+  const safeUnitKey = unitName.replace(/[\.\#\$\[\]\/]/g, "_");
+
   // 1. Simpan/Update status ke Firebase Realtime Database
-  database.ref("statusArmada/" + unitName).set({
+  database.ref("statusArmada/" + safeUnitKey).set({
+    namaUnit: unitName,
     status: statusBaru,
     updatedAt: new Date().toLocaleString("id-ID")
   }).then(() => {
-    console.log("Status maintenance berhasil diupdate di Firebase!");
+    console.log("Status maintenance " + unitName + " berhasil diperbarui di Firebase!");
   }).catch((err) => {
     console.error("Gagal update maintenance di Firebase:", err);
+    alert("Gagal memperbarui status ke server. Periksa koneksi internet Anda.");
   });
-  
-    // 2. Simpan juga ke LocalStorage lokal
+
+  // 2. Simpan juga ke LocalStorage lokal
   const armada = getArmadaData();
   if (armada[unitName]) {
     armada[unitName].status = statusBaru;
@@ -356,7 +364,8 @@ const tarifHargaPerKota = {
   "Banyuwangi":    { "Elf (12-20 Kursi)": 3200000, "Medium Bus (25-39 Kursi)": 5000000, "Big Bus (45-59 Kursi)": 7500000, "Truk Engkel": 6500000, "Truk Fuso": 12000000, "Truk Trailer": 20000000 },
   "Gilimanuk":     { "Elf (12-20 Kursi)": 3500000, "Medium Bus (25-39 Kursi)": 5500000, "Big Bus (45-59 Kursi)": 8000000, "Truk Engkel": 7000000, "Truk Fuso": 13000000, "Truk Trailer": 22000000 },
   "Denpasar":      { "Elf (12-20 Kursi)": 3800000, "Medium Bus (25-39 Kursi)": 6000000, "Big Bus (45-59 Kursi)": 8800000, "Truk Engkel": 7800000, "Truk Fuso": 14500000, "Truk Trailer": 24000000 },
-    // --- SUMATRA ---
+
+  // --- SUMATRA ---
   "Lampung":       { "Elf (12-20 Kursi)": 2500000, "Medium Bus (25-39 Kursi)": 4000000, "Big Bus (45-59 Kursi)": 6000000, "Truk Engkel": 5000000, "Truk Fuso": 9000000,  "Truk Trailer": 16000000 },
   "Palembang":     { "Elf (12-20 Kursi)": 3200000, "Medium Bus (25-39 Kursi)": 5000000, "Big Bus (45-59 Kursi)": 7500000, "Truk Engkel": 6500000, "Truk Fuso": 12000000, "Truk Trailer": 21000000 },
   "Prabumulih":    { "Elf (12-20 Kursi)": 3300000, "Medium Bus (25-39 Kursi)": 5200000, "Big Bus (45-59 Kursi)": 7800000, "Truk Engkel": 6700000, "Truk Fuso": 12500000, "Truk Trailer": 22000000 },
@@ -371,7 +380,7 @@ const tarifHargaPerKota = {
   "Banda Aceh":    { "Elf (12-20 Kursi)": 6200000, "Medium Bus (25-39 Kursi)": 9800000, "Big Bus (45-59 Kursi)": 14500000,"Truk Engkel": 12500000, "Truk Fuso": 23000000, "Truk Trailer": 38000000 },
   "Sabang":        { "Elf (12-20 Kursi)": 6800000, "Medium Bus (25-39 Kursi)": 10500000,"Big Bus (45-59 Kursi)": 15800000,"Truk Engkel": 13800000, "Truk Fuso": 25000000, "Truk Trailer": 41000000 },
 
- // --- KALIMANTAN & SULAWESI ---
+  // --- KALIMANTAN & SULAWESI ---
   "Palangkaraya":  { "Elf (12-20 Kursi)": 5800000, "Medium Bus (25-39 Kursi)": 9000000, "Big Bus (45-59 Kursi)": 13500000,"Truk Engkel": 11500000, "Truk Fuso": 21000000, "Truk Trailer": 36000000 },
   "Banjarmasin":   { "Elf (12-20 Kursi)": 6000000, "Medium Bus (25-39 Kursi)": 9300000, "Big Bus (45-59 Kursi)": 14000000,"Truk Engkel": 11800000, "Truk Fuso": 22000000, "Truk Trailer": 37000000 },
   "Makassar":      { "Elf (12-20 Kursi)": 6500000, "Medium Bus (25-39 Kursi)": 10000000,"Big Bus (45-59 Kursi)": 15000000,"Truk Engkel": 12800000, "Truk Fuso": 23500000, "Truk Trailer": 39000000 },
@@ -401,9 +410,9 @@ function hitungHarga() {
     }
   } else {
     resetHarga();
-  
   }
 }
+
 // DRAWER MENU & MODAL ADMIN
 function toggleMenu() {
   const navMenu = document.getElementById('nav-menu');
@@ -423,6 +432,7 @@ function openModalAdmin() {
 function closeModalAdmin() {
   document.getElementById('modalAdmin').style.display = 'none';
 }
+
 // LOGIN ADMIN
 const dataAdmin = {
   "admin123": { password: "admin123", namaLengkap: "Admin" }
@@ -451,6 +461,7 @@ function logoutAdmin() {
   document.getElementById("username_input").value = "";
   document.getElementById("password_input").value = "";
 }
+
 // FUNGSI CETAK PDF
 function cetakPDF(namaUnit, dataBooking) {
   try {
@@ -517,7 +528,8 @@ function cetakPDF(namaUnit, dataBooking) {
     });
 
     const finalY = doc.lastAutoTable.finalY + 6;
-// 5. TOTAL PEMBAYARAN
+
+    // 5. TOTAL PEMBAYARAN
     doc.setFillColor(241, 245, 249);
     doc.rect(15, finalY, 180, 16, 'F');
     doc.setFillColor(30, 58, 138);
@@ -549,7 +561,8 @@ function cetakPDF(namaUnit, dataBooking) {
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
     doc.text("* Harap tunjukkan bukti pembayaran/reservasi ini saat serah terima unit di lokasi.", 105, sigY + 28, { align: "center" });
-        // 8. UNDUH PDF
+
+    // 8. UNDUH PDF
     const fileName = `Bukti_Sewa_${(dataBooking.nama || 'Customer').replace(/\s+/g, '_')}_#${dataBooking.id}.pdf`;
     doc.save(fileName);
 
@@ -563,36 +576,8 @@ function cetakPDF(namaUnit, dataBooking) {
 document.addEventListener("DOMContentLoaded", function() {
   renderStatusArmada();
 });
-// LISTENER REALTIME DARI FIREBASE UNTUK PORTAL ADMIN
-database.ref("reservasi").on("value", (snapshot) => {
-  const firebaseData = snapshot.val();
-  if (firebaseData) {
-    const armada = getArmadaData();
-    
-    // Reset dulu array booking lokal
-    for (const key in armada) {
-      armada[key].bookings = [];
-    }
 
-    // Masukkan semua data dari Firebase ke dalam list armada
-    Object.keys(firebaseData).forEach(key => {
-      const b = firebaseData[key];
-      if (armada[b.unitArmada]) {
-        armada[b.unitArmada].bookings.push(b);
-      }
-    });
-
-    // Simpan sync ke local & update tampilan admin jika modal terbuka
-    localStorage.setItem("ijt_armada_status", JSON.stringify(armada));
-    renderStatusArmada();
-    
-    const modalAdmin = document.getElementById('modalAdmin');
-    if (modalAdmin && modalAdmin.style.display === 'flex') {
-      renderAdminUnitList();
-    }
-  }
-});
-// LISTENER REALTIME UNTUK MENAMPILKAN DATA DI PORTAL ADMIN
+// LISTENER REALTIME UNTUK DATA RESERVASI & JADWAL SEWA
 database.ref("reservasi").on("value", (snapshot) => {
   const firebaseData = snapshot.val();
   const armada = getArmadaData();
@@ -606,7 +591,6 @@ database.ref("reservasi").on("value", (snapshot) => {
   if (firebaseData) {
     Object.keys(firebaseData).forEach((key) => {
       const b = firebaseData[key];
-      // Cari nama unit armada
       const namaUnit = b.unitArmada || b.unit || b.mobil;
 
       if (namaUnit && armada[namaUnit]) {
@@ -616,14 +600,13 @@ database.ref("reservasi").on("value", (snapshot) => {
     });
   }
 
-  // Simpan update ke LocalStorage & perbarui tampilan Admin
+  // Simpan update ke LocalStorage & perbarui tampilan
   localStorage.setItem("ijt_armada_status", JSON.stringify(armada));
 
   if (typeof renderStatusArmada === "function") {
     renderStatusArmada();
   }
 
-  // Jika modal admin sedang terbuka, render ulang daftarnya
   const modalAdmin = document.getElementById("modalAdmin");
   if (modalAdmin && modalAdmin.style.display === "flex") {
     if (typeof renderAdminUnitList === "function") {
@@ -631,20 +614,32 @@ database.ref("reservasi").on("value", (snapshot) => {
     }
   }
 });
-// LISTENER REALTIME UNTUK STATUS MAINTENANCE ARMADA
+
+// LISTENER REALTIME UNTUK STATUS MAINTENANCE ARMADA (SINKRON CHROME & MI BROWSER)
 database.ref("statusArmada").on("value", (snapshot) => {
   const firebaseStatus = snapshot.val();
   if (firebaseStatus) {
     const armada = getArmadaData();
 
-    // Update status tiap unit sesuai data Firebase
-    Object.keys(firebaseStatus).forEach((unitName) => {
-       if (armada[unitName]) {
-        armada[unitName].status = firebaseStatus[unitName].status;
+    // Update status setiap unit berdasarkan data dari Firebase
+    Object.keys(firebaseStatus).forEach((key) => {
+      const item = firebaseStatus[key];
+      const unitName = item.namaLengkap || item.namaUnit || key;
+
+      if (armada[unitName]) {
+        armada[unitName].status = item.status;
+      } else {
+        // Cek pencocokan tanpa karakter khusus
+        for (const realKey in armada) {
+          if (realKey.replace(/[\.\#\$\[\]\/]/g, "_") === key) {
+            armada[realKey].status = item.status;
+            break;
+          }
+        }
       }
     });
 
-    // Simpan ke LocalStorage & refresh tampilan
+    // Simpan ke LocalStorage & refresh tampilan secara instan
     localStorage.setItem("ijt_armada_status", JSON.stringify(armada));
     
     if (typeof renderStatusArmada === "function") {
