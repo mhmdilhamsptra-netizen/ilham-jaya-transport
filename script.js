@@ -308,6 +308,17 @@ function hapusBookingAdmin(unitName, bookingId) {
 
 
 function ubahStatusMaintenance(unitName, statusBaru) {
+  // 1. Simpan/Update status ke Firebase Realtime Database
+  database.ref("statusArmada/" + unitName).set({
+    status: statusBaru,
+    updatedAt: new Date().toLocaleString("id-ID")
+  }).then(() => {
+    console.log("Status maintenance berhasil diupdate di Firebase!");
+  }).catch((err) => {
+    console.error("Gagal update maintenance di Firebase:", err);
+  });
+
+  // 2. Simpan juga ke LocalStorage lokal
   const armada = getArmadaData();
   if (armada[unitName]) {
     armada[unitName].status = statusBaru;
@@ -626,3 +637,32 @@ database.ref("reservasi").on("value", (snapshot) => {
     }
   }
 });
+// LISTENER REALTIME UNTUK STATUS MAINTENANCE ARMADA
+database.ref("statusArmada").on("value", (snapshot) => {
+  const firebaseStatus = snapshot.val();
+  if (firebaseStatus) {
+    const armada = getArmadaData();
+
+    // Update status tiap unit sesuai data Firebase
+    Object.keys(firebaseStatus).forEach((unitName) => {
+      if (armada[unitName]) {
+        armada[unitName].status = firebaseStatus[unitName].status;
+      }
+    });
+
+    // Simpan ke LocalStorage & refresh tampilan
+    localStorage.setItem("ijt_armada_status", JSON.stringify(armada));
+    
+    if (typeof renderStatusArmada === "function") {
+      renderStatusArmada();
+    }
+
+    const modalAdmin = document.getElementById("modalAdmin");
+    if (modalAdmin && modalAdmin.style.display === "flex") {
+      if (typeof renderAdminUnitList === "function") {
+        renderAdminUnitList();
+      }
+    }
+  }
+});
+
