@@ -285,18 +285,18 @@ function renderAdminUnitList() {
 
 function hapusBookingAdmin(unitName, bookingId) {
   if (confirm("Apakah Anda yakin ingin menghapus jadwal ini?")) {
-    // 1. Hapus dari Firebase Database
+    // Hapus dari Firebase Database
     database.ref("reservasi").once("value", (snapshot) => {
       const data = snapshot.val();
       for (const firebaseKey in data) {
-        if (data[firebaseKey].id === bookingId) {
+        if (data[firebaseKey].id === bookingId || firebaseKey === bookingId) {
           database.ref("reservasi/" + firebaseKey).remove();
           break;
         }
       }
     });
 
-    // 2. Hapus dari LocalStorage
+    // Hapus dari LocalStorage
     const armada = getArmadaData();
     if (armada[unitName] && armada[unitName].bookings) {
       armada[unitName].bookings = armada[unitName].bookings.filter(b => b.id !== bookingId);
@@ -305,6 +305,7 @@ function hapusBookingAdmin(unitName, bookingId) {
     }
   }
 }
+
 
 function ubahStatusMaintenance(unitName, statusBaru) {
   const armada = getArmadaData();
