@@ -307,16 +307,17 @@ function hapusBookingAdmin(unitName, bookingId) {
 }
 
 
+// 1. FUNGSI MENGUBAH STATUS MAINTENANCE
 function ubahStatusMaintenance(unitName, statusBaru) {
-  // 1. Simpan/Update status ke Firebase Realtime Database
+  // Langsung update ke Firebase Realtime Database
   database.ref("statusArmada/" + unitName).set({
-    status: statusBaru,
-    updatedAt: new Date().toLocaleString("id-ID")
+    status: statusBaru
   }).then(() => {
-    console.log("Status maintenance berhasil diupdate di Firebase!");
-  }).catch((err) => {
-    console.error("Gagal update maintenance di Firebase:", err);
+    console.log("Status " + unitName + " berhasil diubah jadi " + statusBaru);
+  }).catch((error) => {
+    alert("Gagal mengupdate status: " + error.message);
   });
+}
 
   // 2. Simpan juga ke LocalStorage lokal
   const armada = getArmadaData();
@@ -662,6 +663,31 @@ database.ref("statusArmada").on("value", (snapshot) => {
       if (typeof renderAdminUnitList === "function") {
         renderAdminUnitList();
       }
+    }
+  }
+});
+// 2. LISTENER REALTIME FIREBASE UNTUK STATUS MAINTENANCE (Taruh di paling bawah script.js)
+database.ref("statusArmada").on("value", (snapshot) => {
+  const dataStatus = snapshot.val();
+  const armada = getArmadaData();
+
+  if (dataStatus) {
+    // Cocokkan status dari Firebase ke data armada lokal
+    Object.keys(dataStatus).forEach((unit) => {
+      if (armada[unit]) {
+        armada[unit].status = dataStatus[unit].status;
+      }
+    });
+
+    // Simpan ke LocalStorage
+    saveArmadaData(armada);
+
+    // Refresh tampilan tabel admin & halaman utama secara otomatis
+    if (typeof renderAdminUnitList === "function") {
+      renderAdminUnitList();
+    }
+    if (typeof renderStatusArmada === "function") {
+      renderStatusArmada();
     }
   }
 });
