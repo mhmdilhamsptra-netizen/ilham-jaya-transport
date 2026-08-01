@@ -206,8 +206,8 @@ function isTanggalBentrok(start1Str, end1Str, start2Str, end2Str) {
   return (dateToDays(start1Str) <= dateToDays(end2Str) && dateToDays(end1Str) >= dateToDays(start2Str));
 }
 
-// PROSES PEMESANAN CUSTOMER (MENYIMPAN KE LOCALSTORAGE & FIREBASE DATABASE)
-async function prosesBookingCustomer(event) {
+// PROSES PEMESANAN CUSTOMER (MENYIMPAN DIRECT KE FIREBASE & MULTI-BROWSER)
+function prosesBookingCustomer(event) {
   event.preventDefault();
 
   const nama = document.getElementById("c_nama").value;
@@ -227,7 +227,7 @@ async function prosesBookingCustomer(event) {
   const armada = getArmadaData();
   const unitData = armada[unit];
 
-  if (unitData.status === "MAINTENANCE") {
+  if (unitData && unitData.status === "MAINTENANCE") {
     alert("Maaf, unit " + unit + " sedang dalam perawatan.");
     return;
   }
@@ -239,7 +239,7 @@ async function prosesBookingCustomer(event) {
   let bentrok = false;
   let jadwalBentrokInfo = "";
 
-  if (unitData.bookings && unitData.bookings.length > 0) {
+  if (unitData && unitData.bookings && unitData.bookings.length > 0) {
     for (const b of unitData.bookings) {
       if (isTanggalBentrok(tglMulaiStr, tglSelesaiStr, b.tglMulai, b.tglSelesai)) {
         bentrok = true;
@@ -272,27 +272,24 @@ async function prosesBookingCustomer(event) {
     waktuPesan: new Date().toLocaleString("id-ID")
   };
 
-  // 1. Simpan ke sistem lokal
-  unitData.bookings.push(newBooking);
-  saveArmadaData(armada);
+  // Kirim data langsung ke Firebase Database
+  database.ref("reservasi").push(newBooking, function(error) {
+    if (error) {
+      alert("Gagal mengirim pemesanan ke server. Silakan periksa koneksi internet Anda atau atur ulang aturan Firebase Database.");
+      console.error("Gagal simpan data ke Firebase:", error);
+    } else {
+      // Konfirmasi Cetak PDF setelah sukses terisi ke server
+      const konfirmasiCetak = confirm(`PEMESANAN BERHASIL!\n\nUnit: ${unit}\nPeriode: ${formatTanggalIndo(tglMulaiStr)} s/d ${formatTanggalIndo(tglSelesaiStr)}\n\nApakah Anda ingin mengunduh/mencetak Bukti Reservasi (PDF) sekarang?`);
+      
+      if (konfirmasiCetak) {
+        cetakPDF(unit, newBooking);
+      }
 
-  // 2. Simpan ke Firebase Realtime Database
-  try {
-    await database.ref("reservasi").push(newBooking);
-  } catch (err) {
-    console.error("Gagal simpan data ke Firebase:", err);
-  }
-
-  // 3. Konfirmasi Cetak PDF
-  const konfirmasiCetak = confirm(`PEMESANAN BERHASIL!\n\nUnit: ${unit}\nPeriode: ${formatTanggalIndo(tglMulaiStr)} s/d ${formatTanggalIndo(tglSelesaiStr)}\n\nApakah Anda ingin mengunduh/mencetak Bukti Reservasi (PDF) sekarang?`);
-  
-  if (konfirmasiCetak) {
-    cetakPDF(unit, newBooking);
-  }
-
-  document.getElementById("customer-form").reset();
-  resetHarga();
-  previewFotoUnit();
+      document.getElementById("customer-form").reset();
+      resetHarga();
+      previewFotoUnit();
+    }
+  });
 }
 
 // RESET TAMPILAN HARGA
