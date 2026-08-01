@@ -520,7 +520,10 @@ function toggleMenu() {
 }
 
 function openModalAdmin() {
-  toggleMenu();
+  const navMenu = document.getElementById('nav-menu');
+  if (navMenu && navMenu.classList.contains('active')) {
+    toggleMenu();
+  }
   document.getElementById('modalAdmin').style.display = 'flex';
 }
 
@@ -669,8 +672,6 @@ function cetakPDF(namaUnit, dataBooking) {
 
 // JALANKAN SAAT HALAMAN DIBUKA
 document.addEventListener("DOMContentLoaded", function() {
-  // PAKSA SINKRONISASI DATA FOTO BARU
-  localStorage.removeItem("ijt_armada_status"); 
   renderStatusArmada();
   
   // Daftarkan listener pratinjau jika elemen dropdown unit ada
