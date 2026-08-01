@@ -78,7 +78,7 @@ function saveArmadaData(data) {
   renderStatusArmada();
 }
 
-// RENDER DAFTAR UNIT DI HALAMAN UTAMA (Dengan Tampilan Multiple Foto)
+// RENDER DAFTAR UNIT DI HALAMAN UTAMA
 function renderStatusArmada() {
   const container = document.getElementById("unit-status-container");
   if (!container) return;
@@ -206,21 +206,21 @@ function isTanggalBentrok(start1Str, end1Str, start2Str, end2Str) {
   return (dateToDays(start1Str) <= dateToDays(end2Str) && dateToDays(end1Str) >= dateToDays(start2Str));
 }
 
-// PROSES PEMESANAN CUSTOMER (TERINTEGRASI FIREBASE REALTIME DENGAN KEAMANAN MULTI-BROWSER)
+// PROSES PEMESANAN CUSTOMER (TERINTEGRASI FIREBASE REALTIME)
 function prosesBookingCustomer(event) {
   event.preventDefault();
 
   const nama = document.getElementById("c_nama").value;
+  const nohp = document.getElementById("c_nohp").value;
   const alamat = document.getElementById("c_alamat_penyewa").value;
   const unit = document.getElementById("c_unit").value;
   const tujuan = document.getElementById("c_tujuan").value;
   const durasi = parseInt(document.getElementById("c_durasi").value) || 1;
   const tglMulaiStr = document.getElementById("c_tanggal_sewa").value;
   const lokasiJemput = document.getElementById("c_lokasi_penjemputan").value;
-  const pembayaran = document.getElementById("c_pembayaran").value;
 
-  if (!unit || !tglMulaiStr) {
-    alert("Silakan lengkapi pilihan unit dan tanggal sewa!");
+  if (!unit || !tglMulaiStr || !nohp) {
+    alert("Silakan lengkapi nomor HP, pilihan unit, dan tanggal sewa!");
     return;
   }
 
@@ -254,32 +254,29 @@ function prosesBookingCustomer(event) {
     return;
   }
 
-  const hargaText = document.getElementById("display-harga").innerText;
   const bookingId = Date.now();
 
   const newBooking = {
     id: bookingId,
     unitArmada: unit,
     nama: nama,
+    nohp: nohp,
     alamat: alamat,
     tujuan: tujuan,
     durasi: durasi,
     tglMulai: tglMulaiStr,
     tglSelesai: tglSelesaiStr,
     lokasiJemput: lokasiJemput,
-    pembayaran: pembayaran,
-    totalHarga: hargaText,
     waktuPesan: new Date().toLocaleString("id-ID")
   };
 
-  // Simpan ke Firebase dengan ID unik child
+  // Simpan ke Firebase
   const newRef = database.ref("reservasi").push();
   newRef.set(newBooking, function(error) {
     if (error) {
       alert("Gagal mengirim pemesanan ke server. Periksa koneksi internet Anda.");
       console.error("Firebase Push Error:", error);
     } else {
-      // Masukkan ke LocalStorage lokal pemesan langsung agar instan
       if (!armada[unit].bookings) armada[unit].bookings = [];
       armada[unit].bookings.push(newBooking);
       saveArmadaData(armada);
@@ -291,16 +288,9 @@ function prosesBookingCustomer(event) {
       }
 
       document.getElementById("customer-form").reset();
-      resetHarga();
       previewFotoUnit();
     }
   });
-}
-
-// RESET TAMPILAN HARGA
-function resetHarga() {
-  document.getElementById("display-rate-info").innerText = "Tarif Per Hari: Rp 0";
-  document.getElementById("display-harga").innerText = "Total: Rp 0";
 }
 
 // PORTAL ADMIN - RENDER JADWAL & TOMBOL CETAK PDF
@@ -331,11 +321,11 @@ function renderAdminUnitList() {
             <span style="background:#2b6cb0; color:white; padding:2px 8px; border-radius:4px; font-size:0.75rem;">Terjadwal</span>
           </div>
           <p style="margin:2px 0;"><strong>Penyewa:</strong> ${d.nama || '-'}</p>
+          <p style="margin:2px 0;"><strong>No. HP:</strong> ${d.nohp || '-'}</p>
           <p style="margin:2px 0;"><strong>Alamat:</strong> ${d.alamat || '-'}</p>
           <p style="margin:2px 0;"><strong>Tujuan:</strong> ${d.tujuan || '-'}</p>
           <p style="margin:2px 0;"><strong>Periode:</strong> ${formatTanggalIndo(d.tglMulai)} s/d ${formatTanggalIndo(d.tglSelesai)} (${d.durasi} Hari)</p>
           <p style="margin:2px 0;"><strong>Jemput:</strong> ${d.lokasiJemput || '-'}</p>
-          <p style="margin:2px 0;"><strong>Total:</strong> ${d.totalHarga || 'Rp 0'} (${d.pembayaran || '-'})</p>
           
           <div style="display: flex; gap: 8px; margin-top: 12px;">
             <button style="flex: 1; padding: 8px; background: #0284c7; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;" onclick='cetakPDF("${key}", ${bookingJson})'>
@@ -421,89 +411,6 @@ function ubahStatusMaintenance(unitName, statusBaru) {
     armada[unitName].status = statusBaru;
     saveArmadaData(armada);
     renderAdminUnitList();
-  }
-}
-
-// DRAFT TARIF KHUSUS SETIAP KOTA
-const tarifHargaPerKota = {
-  // --- JABODETABEK & JAWA BARAT ---
-  "Jakarta":       { "Elf (12-20 Kursi)": 1300000, "Medium Bus (25-39 Kursi)": 2000000, "Big Bus (45-59 Kursi)": 3200000, "Truk Engkel": 900000,  "Truk Fuso": 1800000, "Truk Trailer": 3500000 },
-  "Bogor":         { "Elf (12-20 Kursi)": 1400000, "Medium Bus (25-39 Kursi)": 2100000, "Big Bus (45-59 Kursi)": 3300000, "Truk Engkel": 1000000, "Truk Fuso": 2000000, "Truk Trailer": 4000000 },
-  "Bandung":       { "Elf (12-20 Kursi)": 1600000, "Medium Bus (25-39 Kursi)": 2500000, "Big Bus (45-59 Kursi)": 3800000, "Truk Engkel": 1800000, "Truk Fuso": 3500000, "Truk Trailer": 6000000 },
-  "Sukabumi":      { "Elf (12-20 Kursi)": 1500000, "Medium Bus (25-39 Kursi)": 2300000, "Big Bus (45-59 Kursi)": 3500000, "Truk Engkel": 1500000, "Truk Fuso": 3000000, "Truk Trailer": 5500000 },
-  "Cianjur":       { "Elf (12-20 Kursi)": 1550000, "Medium Bus (25-39 Kursi)": 2400000, "Big Bus (45-59 Kursi)": 3600000, "Truk Engkel": 1600000, "Truk Fuso": 3200000, "Truk Trailer": 5700000 },
-  "Cirebon":       { "Elf (12-20 Kursi)": 1800000, "Medium Bus (25-39 Kursi)": 2800000, "Big Bus (45-59 Kursi)": 4200000, "Truk Engkel": 2500000, "Truk Fuso": 5000000, "Truk Trailer": 8500000 },
-
-  // --- JAWA TENGAH & DIY ---
-  "Tegal":         { "Elf (12-20 Kursi)": 1900000, "Medium Bus (25-39 Kursi)": 3000000, "Big Bus (45-59 Kursi)": 4500000, "Truk Engkel": 3000000, "Truk Fuso": 5500000, "Truk Trailer": 9500000 },
-  "Pekalongan":    { "Elf (12-20 Kursi)": 2000000, "Medium Bus (25-39 Kursi)": 3200000, "Big Bus (45-59 Kursi)": 4800000, "Truk Engkel": 3200000, "Truk Fuso": 6000000, "Truk Trailer": 10000000 },
-  "Purwokerto":    { "Elf (12-20 Kursi)": 2100000, "Medium Bus (25-39 Kursi)": 3300000, "Big Bus (45-59 Kursi)": 5000000, "Truk Engkel": 3300000, "Truk Fuso": 6200000, "Truk Trailer": 10500000 },
-  "Semarang":      { "Elf (12-20 Kursi)": 2200000, "Medium Bus (25-39 Kursi)": 3500000, "Big Bus (45-59 Kursi)": 5200000, "Truk Engkel": 3500000, "Truk Fuso": 6500000, "Truk Trailer": 11000000 },
-  "Yogyakarta":    { "Elf (12-20 Kursi)": 2300000, "Medium Bus (25-39 Kursi)": 3700000, "Big Bus (45-59 Kursi)": 5500000, "Truk Engkel": 3500000, "Truk Fuso": 6500000, "Truk Trailer": 11000000 },
-  "Solo":          { "Elf (12-20 Kursi)": 2400000, "Medium Bus (25-39 Kursi)": 3800000, "Big Bus (45-59 Kursi)": 5600000, "Truk Engkel": 3600000, "Truk Fuso": 6800000, "Truk Trailer": 11500000 },
-  "Wonogiri":      { "Elf (12-20 Kursi)": 2450000, "Medium Bus (25-39 Kursi)": 3900000, "Big Bus (45-59 Kursi)": 5700000, "Truk Engkel": 3700000, "Truk Fuso": 7000000, "Truk Trailer": 11800000 },
-  "Temanggung":    { "Elf (12-20 Kursi)": 2250000, "Medium Bus (25-39 Kursi)": 3600000, "Big Bus (45-59 Kursi)": 5300000, "Truk Engkel": 3400000, "Truk Fuso": 6400000, "Truk Trailer": 10800000 },
-  "Kudus":         { "Elf (12-20 Kursi)": 2350000, "Medium Bus (25-39 Kursi)": 3750000, "Big Bus (45-59 Kursi)": 5550000, "Truk Engkel": 3550000, "Truk Fuso": 6600000, "Truk Trailer": 11200000 },
-  "Rembang":       { "Elf (12-20 Kursi)": 2500000, "Medium Bus (25-39 Kursi)": 4000000, "Big Bus (45-59 Kursi)": 6000000, "Truk Engkel": 3800000, "Truk Fuso": 7200000, "Truk Trailer": 12000000 },
-
-  // --- JAWA TIMUR & BALI ---
-  "Tuban":         { "Elf (12-20 Kursi)": 2600000, "Medium Bus (25-39 Kursi)": 4100000, "Big Bus (45-59 Kursi)": 6200000, "Truk Engkel": 4200000, "Truk Fuso": 7800000, "Truk Trailer": 13500000 },
-  "Surabaya":      { "Elf (12-20 Kursi)": 2700000, "Medium Bus (25-39 Kursi)": 4300000, "Big Bus (45-59 Kursi)": 6500000, "Truk Engkel": 4800000, "Truk Fuso": 8500000, "Truk Trailer": 15000000 },
-  "Malang":        { "Elf (12-20 Kursi)": 2800000, "Medium Bus (25-39 Kursi)": 4400000, "Big Bus (45-59 Kursi)": 6700000, "Truk Engkel": 4900000, "Truk Fuso": 8700000, "Truk Trailer": 15500000 },
-  "Batu":          { "Elf (12-20 Kursi)": 2850000, "Medium Bus (25-39 Kursi)": 4450000, "Big Bus (45-59 Kursi)": 6800000, "Truk Engkel": 5000000, "Truk Fuso": 8800000, "Truk Trailer": 15800000 },
-  "Kediri":        { "Elf (12-20 Kursi)": 2650000, "Medium Bus (25-39 Kursi)": 4200000, "Big Bus (45-59 Kursi)": 6300000, "Truk Engkel": 4500000, "Truk Fuso": 8200000, "Truk Trailer": 14500000 },
-  "Blitar":        { "Elf (12-20 Kursi)": 2750000, "Medium Bus (25-39 Kursi)": 4350000, "Big Bus (45-59 Kursi)": 6600000, "Truk Engkel": 4700000, "Truk Fuso": 8400000, "Truk Trailer": 14800000 },
-  "Banyuwangi":    { "Elf (12-20 Kursi)": 3200000, "Medium Bus (25-39 Kursi)": 5000000, "Big Bus (45-59 Kursi)": 7500000, "Truk Engkel": 6500000, "Truk Fuso": 12000000, "Truk Trailer": 20000000 },
-  "Gilimanuk":     { "Elf (12-20 Kursi)": 3500000, "Medium Bus (25-39 Kursi)": 5500000, "Big Bus (45-59 Kursi)": 8000000, "Truk Engkel": 7000000, "Truk Fuso": 13000000, "Truk Trailer": 22000000 },
-  "Denpasar":      { "Elf (12-20 Kursi)": 3800000, "Medium Bus (25-39 Kursi)": 6000000, "Big Bus (45-59 Kursi)": 8800000, "Truk Engkel": 7800000, "Truk Fuso": 14500000, "Truk Trailer": 24000000 },
-
-  // --- SUMATRA ---
-  "Lampung":       { "Elf (12-20 Kursi)": 2500000, "Medium Bus (25-39 Kursi)": 4000000, "Big Bus (45-59 Kursi)": 6000000, "Truk Engkel": 5000000, "Truk Fuso": 9000000,  "Truk Trailer": 16000000 },
-  "Palembang":     { "Elf (12-20 Kursi)": 3200000, "Medium Bus (25-39 Kursi)": 5000000, "Big Bus (45-59 Kursi)": 7500000, "Truk Engkel": 6500000, "Truk Fuso": 12000000, "Truk Trailer": 21000000 },
-  "Prabumulih":    { "Elf (12-20 Kursi)": 3300000, "Medium Bus (25-39 Kursi)": 5200000, "Big Bus (45-59 Kursi)": 7800000, "Truk Engkel": 6700000, "Truk Fuso": 12500000, "Truk Trailer": 22000000 },
-  "Jambi":         { "Elf (12-20 Kursi)": 3800000, "Medium Bus (25-39 Kursi)": 6000000, "Big Bus (45-59 Kursi)": 9000000, "Truk Engkel": 7500000, "Truk Fuso": 14000000, "Truk Trailer": 24000000 },
-  "Rengat":        { "Elf (12-20 Kursi)": 4200000, "Medium Bus (25-39 Kursi)": 6600000, "Big Bus (45-59 Kursi)": 9800000, "Truk Engkel": 8200000, "Truk Fuso": 15500000, "Truk Trailer": 26500000 },
-  "Pekanbaru":     { "Elf (12-20 Kursi)": 4500000, "Medium Bus (25-39 Kursi)": 7000000, "Big Bus (45-59 Kursi)": 10500000,"Truk Engkel": 8800000, "Truk Fuso": 16500000, "Truk Trailer": 28000000 },
-  "Padang":        { "Elf (12-20 Kursi)": 4600000, "Medium Bus (25-39 Kursi)": 7200000, "Big Bus (45-59 Kursi)": 10800000,"Truk Engkel": 9000000, "Truk Fuso": 17000000, "Truk Trailer": 29000000 },
-  "Bukittinggi":   { "Elf (12-20 Kursi)": 4700000, "Medium Bus (25-39 Kursi)": 7350000, "Big Bus (45-59 Kursi)": 11000000,"Truk Engkel": 9200000, "Truk Fuso": 17300000, "Truk Trailer": 29500000 },
-  "Sibolga":       { "Elf (12-20 Kursi)": 5000000, "Medium Bus (25-39 Kursi)": 7800000, "Big Bus (45-59 Kursi)": 11800000,"Truk Engkel": 9800000, "Truk Fuso": 18500000, "Truk Trailer": 31500000 },
-  "Pematang Siantar": { "Elf (12-20 Kursi)": 5300000, "Medium Bus (25-39 Kursi)": 8200000, "Big Bus (45-59 Kursi)": 12300000,"Truk Engkel": 10300000, "Truk Fuso": 19300000, "Truk Trailer": 33000000 },
-  "Medan":         { "Elf (12-20 Kursi)": 5500000, "Medium Bus (25-39 Kursi)": 8500000, "Big Bus (45-59 Kursi)": 12800000,"Truk Engkel": 10800000, "Truk Fuso": 20000000, "Truk Trailer": 34000000 },
-  "Banda Aceh":    { "Elf (12-20 Kursi)": 6200000, "Medium Bus (25-39 Kursi)": 9800000, "Big Bus (45-59 Kursi)": 14500000,"Truk Engkel": 12500000, "Truk Fuso": 23000000, "Truk Trailer": 38000000 },
-  "Sabang":        { "Elf (12-20 Kursi)": 6800000, "Medium Bus (25-39 Kursi)": 10500000,"Big Bus (45-59 Kursi)": 15800000,"Truk Engkel": 13800000, "Truk Fuso": 25000000, "Truk Trailer": 41000000 },
-
-  // --- KALIMANTAN & SULAWESI ---
-  "Palangkaraya":  { "Elf (12-20 Kursi)": 5800000, "Medium Bus (25-39 Kursi)": 9000000, "Big Bus (45-59 Kursi)": 13500000,"Truk Engkel": 11500000, "Truk Fuso": 21000000, "Truk Trailer": 36000000 },
-  "Banjarmasin":   { "Elf (12-20 Kursi)": 6000000, "Medium Bus (25-39 Kursi)": 9300000, "Big Bus (45-59 Kursi)": 14000000,"Truk Engkel": 11800000, "Truk Fuso": 22000000, "Truk Trailer": 37000000 },
-  "Makassar":      { "Elf (12-20 Kursi)": 6500000, "Medium Bus (25-39 Kursi)": 10000000,"Big Bus (45-59 Kursi)": 15000000,"Truk Engkel": 12800000, "Truk Fuso": 23500000, "Truk Trailer": 39000000 },
-  "Parepare":      { "Elf (12-20 Kursi)": 6700000, "Medium Bus (25-39 Kursi)": 10300000,"Big Bus (45-59 Kursi)": 15500000,"Truk Engkel": 13200000, "Truk Fuso": 24200000, "Truk Trailer": 40000000 }
-};
-
-// HITUNG HARGA SEWA
-function hitungHarga() {
-  const selectedUnit = document.getElementById("c_unit").value;
-  const selectedTujuan = document.getElementById("c_tujuan").value;
-  const durasiHari = parseInt(document.getElementById("c_durasi").value) || 1;
-  
-  const displayRateInfo = document.getElementById("display-rate-info");
-  const displayHarga = document.getElementById("display-harga");
-
-  previewFotoUnit();
-
-  if (selectedUnit && selectedTujuan) {
-    const tarifKota = tarifHargaPerKota[selectedTujuan];
-    
-    if (tarifKota && tarifKota[selectedUnit]) {
-      const hargaPerHari = tarifKota[selectedUnit];
-      const totalHarga = hargaPerHari * durasiHari;
-
-      displayRateInfo.innerText = "Tarif Per Hari (" + selectedTujuan + "): Rp " + hargaPerHari.toLocaleString("id-ID") + " (" + durasiHari + " Hari)";
-      displayHarga.innerText = "Total: Rp " + totalHarga.toLocaleString("id-ID");
-    } else {
-      resetHarga();
-    }
-  } else {
-    resetHarga();
   }
 }
 
@@ -606,12 +513,12 @@ function cetakPDF(namaUnit, dataBooking) {
     // 4. TABEL DETAIL
     const detailTable = [
       ["Nama Pemesan", `: ${dataBooking.nama || '-'}`],
+      ["No. Telepon / HP", `: ${dataBooking.nohp || '-'}`],
       ["Alamat Pemesan", `: ${dataBooking.alamat || '-'}`],
       ["Unit Armada", `: ${namaUnit}`],
       ["Rute / Tujuan", `: ${dataBooking.tujuan || '-'}`],
       ["Lokasi Penjemputan", `: ${dataBooking.lokasiJemput || '-'}`],
-      ["Periode Sewa", `: ${formatTanggalIndo(dataBooking.tglMulai)} s/d ${formatTanggalIndo(dataBooking.tglSelesai)} (${dataBooking.durasi} Hari)`],
-      ["Metode Pembayaran", `: ${dataBooking.pembayaran || '-'}`]
+      ["Periode Sewa", `: ${formatTanggalIndo(dataBooking.tglMulai)} s/d ${formatTanggalIndo(dataBooking.tglSelesai)} (${dataBooking.durasi} Hari)`]
     ];
 
     doc.autoTable({
@@ -625,42 +532,25 @@ function cetakPDF(namaUnit, dataBooking) {
       }
     });
 
-    const finalY = doc.lastAutoTable.finalY + 6;
+    const finalY = doc.lastAutoTable.finalY + 10;
 
-    // 5. TOTAL PEMBAYARAN
-    doc.setFillColor(241, 245, 249);
-    doc.rect(15, finalY, 180, 16, 'F');
-    doc.setFillColor(30, 58, 138);
-    doc.rect(15, finalY, 2, 16, 'F');
-
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(71, 85, 105);
-    doc.text("Total Pembayaran:", 185, finalY + 5.5, { align: "right" });
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 58, 138);
-    doc.text(`${dataBooking.totalHarga || 'Rp 0'}`, 185, finalY + 12, { align: "right" });
-
-    // 6. TANDA TANGAN
-    const sigY = finalY + 26;
+    // 5. TANDA TANGAN
     doc.setFontSize(9.5);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(51, 65, 85);
 
-    doc.text("Penyewa,", 45, sigY, { align: "center" });
-    doc.text(`( ${dataBooking.nama || 'Customer'} )`, 45, sigY + 20, { align: "center" });
+    doc.text("Penyewa,", 45, finalY, { align: "center" });
+    doc.text(`( ${dataBooking.nama || 'Customer'} )`, 45, finalY + 20, { align: "center" });
 
-    doc.text("Admin Transport,", 165, sigY, { align: "center" });
-    doc.text("( Ilham Jaya Transport )", 165, sigY + 20, { align: "center" });
+    doc.text("Admin Transport,", 165, finalY, { align: "center" });
+    doc.text("( Ilham Jaya Transport )", 165, finalY + 20, { align: "center" });
 
-    // 7. FOOTER NOTE
+    // 6. FOOTER NOTE
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
-    doc.text("* Harap tunjukkan bukti pembayaran/reservasi ini saat serah terima unit di lokasi.", 105, sigY + 28, { align: "center" });
+    doc.text("* Harap tunjukkan bukti reservasi ini saat penjemputan unit di lokasi.", 105, finalY + 28, { align: "center" });
 
-    // 8. UNDUH PDF
+    // 7. UNDUH PDF
     const fileName = `Bukti_Sewa_${(dataBooking.nama || 'Customer').replace(/\s+/g, '_')}_#${dataBooking.id}.pdf`;
     doc.save(fileName);
 
@@ -685,12 +575,10 @@ database.ref("reservasi").on("value", (snapshot) => {
   const firebaseData = snapshot.val();
   const armada = getArmadaData();
 
-  // Bersihkan data pemesanan lama
   for (const key in armada) {
     armada[key].bookings = [];
   }
 
-  // Masukkan data terverifikasi dari Firebase
   if (firebaseData) {
     Object.keys(firebaseData).forEach((key) => {
       const b = firebaseData[key];
@@ -703,10 +591,7 @@ database.ref("reservasi").on("value", (snapshot) => {
     });
   }
 
-  // Paksa simpan perubahan dari Firebase ke LocalStorage agar ter-sinkronisasi penuh
   localStorage.setItem("ijt_armada_status", JSON.stringify(armada));
-
-  // Render ulang UI instan di browser manapun yang terbuka
   renderStatusArmada();
 
   const modalAdmin = document.getElementById("modalAdmin");
