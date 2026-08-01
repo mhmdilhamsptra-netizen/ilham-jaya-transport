@@ -11,14 +11,16 @@ const firebaseConfig = {
 };
 
 // INISIALISASI FIREBASE
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 const database = firebase.database();
 
 // DATA DEFAULT ARMADA (Foto Elf menggunakan Array [Elf1.png, Elf2.png])
 const defaultArmada = {
   "Elf (12-20 Kursi)": { 
     status: "TERSEDIA", 
-    foto: ["Elf1.png", "Elf2.png"], // Dua pilihan foto khusus Elf di root repository
+    foto: ["Elf1.png", "Elf2.png"], 
     bookings: [] 
   },
   "Medium Bus (25-39 Kursi)": { 
@@ -53,19 +55,17 @@ function getArmadaData() {
   const localData = localStorage.getItem("ijt_armada_status");
   if (!localData) {
     localStorage.setItem("ijt_armada_status", JSON.stringify(defaultArmada));
-    return defaultArmada;
+    return JSON.parse(JSON.stringify(defaultArmada));
   }
   const data = JSON.parse(localData);
-  for (const key in data) {
+  for (const key in defaultArmada) {
+    if (!data[key]) {
+      data[key] = defaultArmada[key];
+    }
     if (!data[key].bookings) {
       data[key].bookings = [];
-      if (data[key].detail) {
-        data[key].bookings.push(data[key].detail);
-        delete data[key].detail;
-      }
     }
-    // Pastikan jika ada armada lama yang belum punya properti foto, disesuaikan dengan default
-    if (!data[key].foto && defaultArmada[key]) {
+    if (!data[key].foto) {
       data[key].foto = defaultArmada[key].foto;
     }
   }
@@ -100,7 +100,7 @@ function renderStatusArmada() {
       descText = "Unit sedang dalam perawatan rutin / perbaikan.";
     }
 
-    // Normalisasi data foto (mendukung Array atau String tunggal)
+    // Normalisasi data foto
     let fotoList = [];
     if (Array.isArray(value.foto)) {
       fotoList = value.foto;
@@ -112,7 +112,7 @@ function renderStatusArmada() {
       fotoList = ['https://via.placeholder.com/400x250?text=Foto+Armada'];
     }
 
-    // Generator HTML untuk Foto (1 foto full atau 2 foto berdampingan)
+    // Generator HTML untuk Foto
     let fotoHTML = "";
     if (fotoList.length > 1) {
       fotoHTML = `
@@ -147,7 +147,7 @@ function renderStatusArmada() {
   }
 }
 
-// PRATINJAU FOTO UNIT PADA FORMULIR CUSTOMER (Tampil Otomatis Saat Unit Dipilih)
+// PRATINJAU FOTO UNIT PADA FORMULIR CUSTOMER
 function previewFotoUnit() {
   const selectedUnit = document.getElementById("c_unit") ? document.getElementById("c_unit").value : null;
   const previewBox = document.getElementById("unit-preview-box");
@@ -206,7 +206,7 @@ function isTanggalBentrok(start1Str, end1Str, start2Str, end2Str) {
   return (dateToDays(start1Str) <= dateToDays(end2Str) && dateToDays(end1Str) >= dateToDays(start2Str));
 }
 
-// PROSES PEMESANAN CUSTOMER (MENYIMPAN DIRECT KE FIREBASE & MULTI-BROWSER)
+// PROSES PEMESANAN CUSTOMER (TERINTEGRASI FIREBASE REALTIME DENGAN KEAMANAN MULTI-BROWSER)
 function prosesBookingCustomer(event) {
   event.preventDefault();
 
@@ -272,13 +272,18 @@ function prosesBookingCustomer(event) {
     waktuPesan: new Date().toLocaleString("id-ID")
   };
 
-  // Kirim data langsung ke Firebase Database
-  database.ref("reservasi").push(newBooking, function(error) {
+  // Simpan ke Firebase dengan ID unik child
+  const newRef = database.ref("reservasi").push();
+  newRef.set(newBooking, function(error) {
     if (error) {
-      alert("Gagal mengirim pemesanan ke server. Silakan periksa koneksi internet Anda atau atur ulang aturan Firebase Database.");
-      console.error("Gagal simpan data ke Firebase:", error);
+      alert("Gagal mengirim pemesanan ke server. Periksa koneksi internet Anda.");
+      console.error("Firebase Push Error:", error);
     } else {
-      // Konfirmasi Cetak PDF setelah sukses terisi ke server
+      // Masukkan ke LocalStorage lokal pemesan langsung agar instan
+      if (!armada[unit].bookings) armada[unit].bookings = [];
+      armada[unit].bookings.push(newBooking);
+      saveArmadaData(armada);
+
       const konfirmasiCetak = confirm(`PEMESANAN BERHASIL!\n\nUnit: ${unit}\nPeriode: ${formatTanggalIndo(tglMulaiStr)} s/d ${formatTanggalIndo(tglSelesaiStr)}\n\nApakah Anda ingin mengunduh/mencetak Bukti Reservasi (PDF) sekarang?`);
       
       if (konfirmasiCetak) {
@@ -377,21 +382,19 @@ function renderAdminUnitList() {
 
 function hapusBookingAdmin(unitName, bookingId) {
   if (confirm("Apakah Anda yakin ingin menghapus jadwal ini?")) {
-    // Hapus dari Firebase Database
     database.ref("reservasi").once("value", (snapshot) => {
       const data = snapshot.val();
       for (const firebaseKey in data) {
-        if (data[firebaseKey].id === bookingId || firebaseKey === bookingId) {
+        if (data[firebaseKey].id === bookingId || firebaseKey === String(bookingId)) {
           database.ref("reservasi/" + firebaseKey).remove();
           break;
         }
       }
     });
 
-    // Hapus dari LocalStorage
     const armada = getArmadaData();
     if (armada[unitName] && armada[unitName].bookings) {
-      armada[unitName].bookings = armada[unitName].bookings.filter(b => b.id !== bookingId);
+      armada[unitName].bookings = armada[unitName].bookings.filter(b => b.id !== bookingId && String(b.id) !== String(bookingId));
       saveArmadaData(armada);
       renderAdminUnitList();
     }
@@ -407,10 +410,10 @@ function ubahStatusMaintenance(unitName, statusBaru) {
     status: statusBaru,
     updatedAt: new Date().toLocaleString("id-ID")
   }).then(() => {
-    console.log("Status maintenance " + unitName + " berhasil diperbarui di Firebase!");
+    console.log("Status maintenance " + unitName + " diperbarui.");
   }).catch((err) => {
     console.error("Gagal update maintenance di Firebase:", err);
-    alert("Gagal memperbarui status ke server. Periksa koneksi internet Anda.");
+    alert("Gagal memperbarui status ke server.");
   });
 
   const armada = getArmadaData();
@@ -485,7 +488,6 @@ function hitungHarga() {
   const displayRateInfo = document.getElementById("display-rate-info");
   const displayHarga = document.getElementById("display-harga");
 
-  // Panggil pratinjau foto
   previewFotoUnit();
 
   if (selectedUnit && selectedTujuan) {
@@ -522,6 +524,7 @@ function openModalAdmin() {
     toggleMenu();
   }
   document.getElementById('modalAdmin').style.display = 'flex';
+  renderAdminUnitList();
 }
 
 function closeModalAdmin() {
@@ -663,7 +666,7 @@ function cetakPDF(namaUnit, dataBooking) {
 
   } catch (err) {
     console.error("Gagal buat PDF:", err);
-    alert("Gagal mengunduh PDF. Pastikan jaringan internet stabil untuk memuat pustaka jsPDF.");
+    alert("Gagal mengunduh PDF. Pastikan koneksi internet stabil untuk memuat pustaka jsPDF.");
   }
 }
 
@@ -671,24 +674,23 @@ function cetakPDF(namaUnit, dataBooking) {
 document.addEventListener("DOMContentLoaded", function() {
   renderStatusArmada();
   
-  // Daftarkan listener pratinjau jika elemen dropdown unit ada
   const selectUnit = document.getElementById("c_unit");
   if (selectUnit) {
     selectUnit.addEventListener("change", previewFotoUnit);
   }
 });
 
-// LISTENER REALTIME UNTUK DATA RESERVASI & JADWAL SEWA
+// LISTENER REALTIME UNIVERSAL UNTUK DATA RESERVASI SEWA
 database.ref("reservasi").on("value", (snapshot) => {
   const firebaseData = snapshot.val();
   const armada = getArmadaData();
 
-  // Reset daftar booking lokal
+  // Bersihkan data pemesanan lama
   for (const key in armada) {
     armada[key].bookings = [];
   }
 
-  // Jika ada data dari Firebase, masukkan ke daftar armada
+  // Masukkan data terverifikasi dari Firebase
   if (firebaseData) {
     Object.keys(firebaseData).forEach((key) => {
       const b = firebaseData[key];
@@ -701,22 +703,19 @@ database.ref("reservasi").on("value", (snapshot) => {
     });
   }
 
-  // Simpan update ke LocalStorage & perbarui tampilan
+  // Paksa simpan perubahan dari Firebase ke LocalStorage agar ter-sinkronisasi penuh
   localStorage.setItem("ijt_armada_status", JSON.stringify(armada));
 
-  if (typeof renderStatusArmada === "function") {
-    renderStatusArmada();
-  }
+  // Render ulang UI instan di browser manapun yang terbuka
+  renderStatusArmada();
 
   const modalAdmin = document.getElementById("modalAdmin");
   if (modalAdmin && modalAdmin.style.display === "flex") {
-    if (typeof renderAdminUnitList === "function") {
-      renderAdminUnitList();
-    }
+    renderAdminUnitList();
   }
 });
 
-// LISTENER REALTIME UNTUK STATUS MAINTENANCE ARMADA
+// LISTENER REALTIME UNTUK STATUS MAINTENANCE
 database.ref("statusArmada").on("value", (snapshot) => {
   const firebaseStatus = snapshot.val();
   if (firebaseStatus) {
@@ -739,16 +738,11 @@ database.ref("statusArmada").on("value", (snapshot) => {
     });
 
     localStorage.setItem("ijt_armada_status", JSON.stringify(armada));
-    
-    if (typeof renderStatusArmada === "function") {
-      renderStatusArmada();
-    }
+    renderStatusArmada();
 
     const modalAdmin = document.getElementById("modalAdmin");
     if (modalAdmin && modalAdmin.style.display === "flex") {
-      if (typeof renderAdminUnitList === "function") {
-        renderAdminUnitList();
-      }
+      renderAdminUnitList();
     }
   }
 });
