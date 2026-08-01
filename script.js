@@ -14,14 +14,38 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-// DATA DEFAULT ARMADA
+// DATA DEFAULT ARMADA (Foto Elf menggunakan Array [Elf1.png, Elf2.png])
 const defaultArmada = {
-  "Elf (12-20 Kursi)": { status: "TERSEDIA", bookings: [] },
-  "Medium Bus (25-39 Kursi)": { status: "TERSEDIA", bookings: [] },
-  "Big Bus (45-59 Kursi)": { status: "TERSEDIA", bookings: [] },
-  "Truk Engkel": { status: "TERSEDIA", bookings: [] },
-  "Truk Fuso": { status: "TERSEDIA", bookings: [] },
-  "Truk Trailer": { status: "TERSEDIA", bookings: [] }
+  "Elf (12-20 Kursi)": { 
+    status: "TERSEDIA", 
+    foto: ["Elf1.png", "Elf2.png"], // Dua pilihan foto khusus Elf di root repository
+    bookings: [] 
+  },
+  "Medium Bus (25-39 Kursi)": { 
+    status: "TERSEDIA", 
+    foto: ["MediumBus.png"], 
+    bookings: [] 
+  },
+  "Big Bus (45-59 Kursi)": { 
+    status: "TERSEDIA", 
+    foto: ["BigBus.png"], 
+    bookings: [] 
+  },
+  "Truk Engkel": { 
+    status: "TERSEDIA", 
+    foto: ["TrukEngkel.png"], 
+    bookings: [] 
+  },
+  "Truk Fuso": { 
+    status: "TERSEDIA", 
+    foto: ["TrukFuso.png"], 
+    bookings: [] 
+  },
+  "Truk Trailer": { 
+    status: "TERSEDIA", 
+    foto: ["TrukTrailer.png"], 
+    bookings: [] 
+  }
 };
 
 // AMBIL DATA ARMADA DARI LOCALSTORAGE
@@ -40,6 +64,10 @@ function getArmadaData() {
         delete data[key].detail;
       }
     }
+    // Pastikan jika ada armada lama yang belum punya properti foto, disesuaikan dengan default
+    if (!data[key].foto && defaultArmada[key]) {
+      data[key].foto = defaultArmada[key].foto;
+    }
   }
   return data;
 }
@@ -50,7 +78,7 @@ function saveArmadaData(data) {
   renderStatusArmada();
 }
 
-// RENDER DAFTAR UNIT DI HALAMAN UTAMA
+// RENDER DAFTAR UNIT DI HALAMAN UTAMA (Dengan Tampilan Multiple Foto)
 function renderStatusArmada() {
   const container = document.getElementById("unit-status-container");
   if (!container) return;
@@ -72,14 +100,80 @@ function renderStatusArmada() {
       descText = "Unit sedang dalam perawatan rutin / perbaikan.";
     }
 
+    // Normalisasi data foto (mendukung Array atau String tunggal)
+    let fotoList = [];
+    if (Array.isArray(value.foto)) {
+      fotoList = value.foto;
+    } else if (value.foto) {
+      fotoList = [value.foto];
+    } else if (defaultArmada[key] && defaultArmada[key].foto) {
+      fotoList = defaultArmada[key].foto;
+    } else {
+      fotoList = ['https://via.placeholder.com/400x250?text=Foto+Armada'];
+    }
+
+    // Generator HTML untuk Foto (1 foto full atau 2 foto berdampingan)
+    let fotoHTML = "";
+    if (fotoList.length > 1) {
+      fotoHTML = `
+        <div style="display: flex; gap: 4px; height: 160px; background: #f1f5f9;">
+          ${fotoList.map(img => `
+            <img src="${img}" alt="${key}" style="width: 50%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/400x250?text=Foto+Armada'">
+          `).join('')}
+        </div>
+      `;
+    } else {
+      fotoHTML = `
+        <div style="width: 100%; height: 160px; overflow: hidden; background: #f1f5f9;">
+          <img src="${fotoList[0]}" alt="${key}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/400x250?text=Foto+Armada'">
+        </div>
+      `;
+    }
+
     const card = document.createElement("div");
-    card.style.cssText = "border: 1px solid #cbd5e1; padding: 12px; margin-bottom: 10px; border-radius: 6px; background: #fff;";
+    card.style.cssText = "border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05);";
+    
     card.innerHTML = `
-      <h4 style="margin:0 0 5px; color:#1e3a8a;">${key}</h4>
-      <span style="font-size:0.75rem; font-weight:bold; padding:3px 8px; border-radius:4px; color:white; background:${isMaintenance ? '#dc2626' : '#16a34a'};">${statusText}</span>
-      <p style="font-size: 0.85rem; color: #64748b; margin: 5px 0 0;">${descText}</p>
+      ${fotoHTML}
+      <div style="padding: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h4 style="margin: 0; color: #1e3a8a; font-size: 1rem;">${key}</h4>
+          <span style="font-size: 0.7rem; font-weight: bold; padding: 3px 8px; border-radius: 4px; color: white; background: ${isMaintenance ? '#dc2626' : '#16a34a'};">${statusText}</span>
+        </div>
+        <p style="font-size: 0.82rem; color: #64748b; margin: 0;">${descText}</p>
+      </div>
     `;
     container.appendChild(card);
+  }
+}
+
+// PRATINJAU FOTO UNIT PADA FORMULIR CUSTOMER (Tampil Otomatis Saat Unit Dipilih)
+function previewFotoUnit() {
+  const selectedUnit = document.getElementById("c_unit") ? document.getElementById("c_unit").value : null;
+  const previewBox = document.getElementById("unit-preview-box");
+
+  if (!previewBox) return;
+
+  if (selectedUnit) {
+    const armada = getArmadaData();
+    const unitData = armada[selectedUnit] || defaultArmada[selectedUnit];
+
+    if (unitData && unitData.foto) {
+      let fotoList = Array.isArray(unitData.foto) ? unitData.foto : [unitData.foto];
+      
+      previewBox.innerHTML = `
+        <div style="display: flex; gap: 8px; justify-content: center; margin-top: 10px;">
+          ${fotoList.map(img => `
+            <img src="${img}" style="width: ${fotoList.length > 1 ? '48%' : '100%'}; max-height: 180px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1;" onerror="this.src='https://via.placeholder.com/400x250?text=Foto+Armada'">
+          `).join('')}
+        </div>
+      `;
+      previewBox.style.display = "block";
+    } else {
+      previewBox.style.display = "none";
+    }
+  } else {
+    previewBox.style.display = "none";
   }
 }
 
@@ -198,6 +292,7 @@ async function prosesBookingCustomer(event) {
 
   document.getElementById("customer-form").reset();
   resetHarga();
+  previewFotoUnit();
 }
 
 // RESET TAMPILAN HARGA
@@ -308,10 +403,8 @@ function hapusBookingAdmin(unitName, bookingId) {
 
 // UBAH STATUS MAINTENANCE & SINKRONISASI KE FIREBASE
 function ubahStatusMaintenance(unitName, statusBaru) {
-  // Safe Key untuk Firebase (mengganti karakter khusus agar tidak merusak path)
   const safeUnitKey = unitName.replace(/[\.\#\$\[\]\/]/g, "_");
 
-  // 1. Simpan/Update status ke Firebase Realtime Database
   database.ref("statusArmada/" + safeUnitKey).set({
     namaUnit: unitName,
     status: statusBaru,
@@ -323,7 +416,6 @@ function ubahStatusMaintenance(unitName, statusBaru) {
     alert("Gagal memperbarui status ke server. Periksa koneksi internet Anda.");
   });
 
-  // 2. Simpan juga ke LocalStorage lokal
   const armada = getArmadaData();
   if (armada[unitName]) {
     armada[unitName].status = statusBaru;
@@ -395,6 +487,9 @@ function hitungHarga() {
   
   const displayRateInfo = document.getElementById("display-rate-info");
   const displayHarga = document.getElementById("display-harga");
+
+  // Panggil pratinjau foto
+  previewFotoUnit();
 
   if (selectedUnit && selectedTujuan) {
     const tarifKota = tarifHargaPerKota[selectedTujuan];
@@ -574,7 +669,15 @@ function cetakPDF(namaUnit, dataBooking) {
 
 // JALANKAN SAAT HALAMAN DIBUKA
 document.addEventListener("DOMContentLoaded", function() {
+  // PAKSA SINKRONISASI DATA FOTO BARU
+  localStorage.removeItem("ijt_armada_status"); 
   renderStatusArmada();
+  
+  // Daftarkan listener pratinjau jika elemen dropdown unit ada
+  const selectUnit = document.getElementById("c_unit");
+  if (selectUnit) {
+    selectUnit.addEventListener("change", previewFotoUnit);
+  }
 });
 
 // LISTENER REALTIME UNTUK DATA RESERVASI & JADWAL SEWA
@@ -615,13 +718,12 @@ database.ref("reservasi").on("value", (snapshot) => {
   }
 });
 
-// LISTENER REALTIME UNTUK STATUS MAINTENANCE ARMADA (SINKRON CHROME & MI BROWSER)
+// LISTENER REALTIME UNTUK STATUS MAINTENANCE ARMADA
 database.ref("statusArmada").on("value", (snapshot) => {
   const firebaseStatus = snapshot.val();
   if (firebaseStatus) {
     const armada = getArmadaData();
 
-    // Update status setiap unit berdasarkan data dari Firebase
     Object.keys(firebaseStatus).forEach((key) => {
       const item = firebaseStatus[key];
       const unitName = item.namaLengkap || item.namaUnit || key;
@@ -629,7 +731,6 @@ database.ref("statusArmada").on("value", (snapshot) => {
       if (armada[unitName]) {
         armada[unitName].status = item.status;
       } else {
-        // Cek pencocokan tanpa karakter khusus
         for (const realKey in armada) {
           if (realKey.replace(/[\.\#\$\[\]\/]/g, "_") === key) {
             armada[realKey].status = item.status;
@@ -639,7 +740,6 @@ database.ref("statusArmada").on("value", (snapshot) => {
       }
     });
 
-    // Simpan ke LocalStorage & refresh tampilan secara instan
     localStorage.setItem("ijt_armada_status", JSON.stringify(armada));
     
     if (typeof renderStatusArmada === "function") {
