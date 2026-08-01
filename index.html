@@ -85,6 +85,11 @@
         </div>
 
         <div class="form-group">
+          <label for="c_nohp">Nomor HP / WhatsApp Penyewa:</label>
+          <input type="tel" id="c_nohp" placeholder="Contoh: 081234567890" required>
+        </div>
+
+        <div class="form-group">
           <label for="c_alamat_penyewa">Alamat Lengkap Penyewa:</label>
           <textarea id="c_alamat_penyewa" rows="2" placeholder="Masukkan alamat domisili / tempat tinggal Penyewa" required></textarea>
         </div>
@@ -92,10 +97,10 @@
         <!-- DROPDOWN UNIT BERDASARKAN UNIT TERSEDIA -->
         <div class="form-group">
           <label for="c_unit">Unit yang Ingin Disewa:</label>
-          <select id="c_unit" onchange="hitungHarga()" required>
+          <select id="c_unit" required>
             <option value="">-- Pilih Unit Armada --</option>
             <optgroup label="Bus Pariwisata">
-              <option value="Elf (12-20 Kursi)">Sewa Elf (12 - 20 Kursi) - Isuzu Elf New Armada</option>
+              <option value="Elf (12-20 Kursi)">Sewa Elf (12 - 20 Kursi)</option>
               <option value="Medium Bus (25-39 Kursi)">Sewa Medium Bus (25 - 39 Kursi)</option>
               <option value="Big Bus (45-59 Kursi)">Sewa Big Bus (45 - 59 Kursi)</option>
             </optgroup>
@@ -110,69 +115,16 @@
         <!-- WADAH PRATINJAU FOTO UNIT (DITAMBAHKAN UNTUK SINKRONISASI JAVASCRIPT) -->
         <div id="unit-preview-box" style="display: none; margin-bottom: 15px;"></div>
 
+        <!-- INPUT MANUAL KOTA TUJUAN -->
         <div class="form-group">
           <label for="c_tujuan">Kota Tujuan / Rute Perjalanan:</label>
-          <select id="c_tujuan" onchange="hitungHarga()" required>
-            <option value="">-- Pilih Kota Tujuan --</option>
-            <optgroup label="Jabodetabek & Jawa Barat">
-              <option value="Jakarta">Jakarta</option>
-              <option value="Bogor">Bogor</option>
-              <option value="Bandung">Bandung</option>
-              <option value="Sukabumi">Sukabumi</option>
-              <option value="Cianjur">Cianjur</option>
-              <option value="Cirebon">Cirebon</option>
-            </optgroup>
-            <optgroup label="Jawa Tengah & DIY">
-              <option value="Tegal">Tegal</option>
-              <option value="Pekalongan">Pekalongan</option>
-              <option value="Semarang">Semarang</option>
-              <option value="Purwokerto">Purwokerto</option>
-              <option value="Yogyakarta">Yogyakarta</option>
-              <option value="Solo">Solo</option>
-              <option value="Wonogiri">Wonogiri</option>
-              <option value="Temanggung">Temanggung</option>
-              <option value="Kudus">Kudus</option>
-              <option value="Rembang">Rembang</option>
-            </optgroup>
-            <optgroup label="Jawa Timur & Bali">
-              <option value="Tuban">Tuban</option>
-              <option value="Surabaya">Surabaya</option>
-              <option value="Malang">Malang</option>
-              <option value="Batu">Batu</option>
-              <option value="Kediri">Kediri</option>
-              <option value="Blitar">Blitar</option>
-              <option value="Banyuwangi">Banyuwangi</option>
-              <option value="Gilimanuk">Gilimanuk</option>
-              <option value="Denpasar">Denpasar</option>
-            </optgroup>
-            <optgroup label="Sumatra">
-              <option value="Lampung">Lampung</option>
-              <option value="Palembang">Palembang</option>
-              <option value="Prabumulih">Prabumulih</option>
-              <option value="Jambi">Jambi</option>
-              <option value="Rengat">Rengat</option>
-              <option value="Pekanbaru">Pekanbaru</option>
-              <option value="Padang">Padang</option>
-              <option value="Bukittinggi">Bukittinggi</option>
-              <option value="Sibolga">Sibolga</option>
-              <option value="Pematang Siantar">Pematang Siantar</option>
-              <option value="Medan">Medan</option>
-              <option value="Sabang">Sabang</option>
-              <option value="Banda Aceh">Banda Aceh</option>
-            </optgroup>
-            <optgroup label="Kalimantan & Sulawesi">
-              <option value="Palangkaraya">Palangkaraya</option>
-              <option value="Banjarmasin">Banjarmasin</option>
-              <option value="Makassar">Makassar</option>
-              <option value="Parepare">Parepare</option>
-            </optgroup>
-          </select>
+          <input type="text" id="c_tujuan" placeholder="Masukkan kota / alamat tujuan Anda" required>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label for="c_durasi">Durasi Waktu Sewa (Hari):</label>
-            <select id="c_durasi" onchange="hitungHarga()" required>
+            <select id="c_durasi" required>
               <option value="1">1 Hari</option>
               <option value="2">2 Hari</option>
               <option value="3">3 Hari</option>
@@ -194,24 +146,6 @@
         <div class="form-group">
           <label for="c_lokasi_penjemputan">Detail Lokasi Penjemputan Unit:</label>
           <textarea id="c_lokasi_penjemputan" rows="2" placeholder="Masukkan lokasi penjemputan spesifik" required></textarea>
-        </div>
-
-        <!-- ESTIMASI HARGA -->
-        <div class="price-box">
-          <h3>Estimasi Biaya Sewa:</h3>
-          <div class="price-rate-info" id="display-rate-info">Tarif Per Hari: Rp 0</div>
-          <div class="price-amount" id="display-harga">Total: Rp 0</div>
-          <small style="color: #64748b; font-size: 0.8rem;">*Harga estimasi belum termasuk biaya tol, parkir, dan tips driver.</small>
-        </div>
-
-        <div class="form-group">
-          <label for="c_pembayaran">Metode Pembayaran Sewa:</label>
-          <select id="c_pembayaran" required>
-            <option value="">-- Pilih Metode Pembayaran --</option>
-            <option value="Transfer Bank">Transfer Bank</option>
-            <option value="E-Wallet / DANA">E-Wallet / DANA</option>
-            <option value="Cash saat Serah Terima Unit">Cash (Tunai) saat Serah Terima Unit</option>
-          </select>
         </div>
 
         <button type="submit" id="btn-submit-booking" class="btn-submit">Kirim Pemesanan Sewa</button>
